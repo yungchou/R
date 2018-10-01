@@ -1,0 +1,126 @@
+---
+title: "RPart1_Homework"
+author: "NYC Data Science Academy"
+output: html_document
+---
+## Question #1	
+
+Compound interest can be computed using the formula
+$$A = P (1+\frac{r}{100}) ^n$$
+where P is the original money lent, A is what it amounts to in n years at R percent per year interest. Write an R command to calculate a vector of numbers indicating the amount of money owed (A) after n years, where n ranges from 1 to 15 in yearly increments. The original amount lent is 5000 dollars (P) and the interest rate remains constant throughout the period at 11.5% (r). 
+
+```{r load_library, message=TRUE}
+p = 5000; r = 11.5; n = 1:15
+c( p*(1 + r/100)^n )
+```
+
+## Question #2
+
+Assume that we have collected the heights and weights of four people. The heights (in cm) are 180, 165, 160, 193; the respective weights (in kg) are 87, 58, 65, 100. Create two vectors, `height` and `weight`, using the data. Body mass index (BMI) is defined as
+$$BMI = \frac{mass_{kg}}{height_{m}^2}$$
+Write an R command to make a vector calculating the BMI values for the four people. Be careful of the units! As a challenge, use the height vector to make a boolean vector named `tall` of the heights above 6 feet.
+
+```{r message=TRUE}
+height.meter = c(180, 165, 160, 193)/100
+weight.kg = c(87, 58, 65, 100)
+bmi = c(weight.kg/height.meter^2); bmi
+meter.to.foot = 3.28084
+tall = over.6foot = c( height.meter*meter.to.foot > 6 ); tall
+```
+
+
+## Question #3:
+
+1. From your RStudio, import the built-in cars dataset by running `data(cars)`.
+
+2. Print the first 5 lines from cars.
+
+3. Randomly generate a vector as long as the the number of rows in cars containing elements NY, CA or CT. Call the vector `state`. Run the code `set.seed(0)` on the line above your vector. This makes your results reproducible (anybody who runs the code `set.seed(0)` on their randomized vector will end up with the same random vector you generated). 
+
+4. Add state to the data frame cars as a new column. Again name the column `state`.
+
+5. Create a new column `ratio` whose value is the ratio `dist`/`speed`. Then compute the average and standard deviation of that column.
+
+```{r message=TRUE}
+data(cars)
+head(cars,5)
+set.seed(0)
+state = sample( c('NY','CA','CT'), nrow(cars), replace=TRUE )
+cars$state <- state; head(cars)
+cars$ratio <- cars$dist/cars$speed; head(cars)
+cat( 'ratio average = ', mean(cars$ratio), '\nratio sd = ', sd(cars$ratio) )
+```
+
+
+## Question #4: 
+
+Read the `TimesSquareSignage.csv` and import it into R as `ts_data`. Then check the following features of the dataset:
+
+1. The number of observations and the number of variables.
+
+2. The type (`class`) of each variable.
+
+3. How many missing values are there in the dataset?
+
+4. Which rows (people) have missing values? Which columns (variables) include missing values?
+
+```{r message=TRUE}
+ts_data = read.csv('https://s3.amazonaws.com/graderdata/TimesSquareSignage.csv', stringsAsFactors=FALSE)
+cat('num of obs = ', nrow(ts_data), '\nnum of var = ', ncol(ts_data))
+sapply(ts_data, class)
+cat('missing values in ts_data = ',sum(is.na(ts_data)))
+rows.with.missing.values <- ts_data[!complete.cases(ts_data), ]; head(rows.with.missing.values, 3)
+cols.with.missing.values = c()
+for(x in names(ts_data)){ 
+  ifelse( 
+    is.na(ts_data[x]), 
+    cols.with.missing.values <- c(cols.with.missing.values, x), 
+    next() 
+    )}
+cols.with.missing.values
+
+```
+
+## Question #5:
+
+From the Time Square dataset, we'd like to extract specific information about advertising in Midtown Manhattan. Obtain the following data frames and save them in a subfolder named `data` in your current directory as CSV files:
+
+1. Observations from Upper Broadway. Save as `UpperBway.csv`.
+
+2. Observations with greater-than-average square footage. Save as `SF.csv`.
+
+3. The name, address, and location of the ten signs with the largest total square footage. Save as `TopTen.csv`. 
+
+```{r message=TRUE}
+thisPath<-'./data'
+if(!dir.exists(thisPath)) dir.create(thisPath)
+
+thisFile<-paste0(thisPath,'/','UpperBway.csv')
+ifelse( file.exists(thisFile), file.remove(thisFile), file.create(thisFile) )
+write.csv(
+  ts_data[ts_data$Location=='Upper Bway', ],
+  file=thisFile
+)
+
+thisFile<-paste0(thisPath,'/','SF.csv')
+ifelse( file.exists(thisFile), file.remove(thisFile), file.create(thisFile) )
+averageSF <- mean(ts_data$SF)
+write.csv(
+  ts_data[ts_data$SF>=averageSF, ],
+  file=thisFile
+)
+
+thisFile<-paste0(thisPath,'/','TopTen.csv')
+ifelse( file.exists(thisFile), file.remove(thisFile), file.create(thisFile) )
+write.csv(
+  ts_data[head(ordered(ts_data$TOTAL.SF),10),],
+  file=thisFile
+)
+
+list.files(path = thisPath, full.names = TRUE, recursive = TRUE)
+
+```
+
+
+
+
