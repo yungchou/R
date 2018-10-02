@@ -21,11 +21,11 @@ $$BMI = \frac{mass_{kg}}{height_{m}^2}$$
 Write an R command to make a vector calculating the BMI values for the four people. Be careful of the units! As a challenge, use the height vector to make a boolean vector named `tall` of the heights above 6 feet.
 
 ```{r message=TRUE}
-height.meter = c(180, 165, 160, 193)/100
-weight.kg = c(87, 58, 65, 100)
-bmi = c(weight.kg/height.meter^2); bmi
+height.meter <- c(180, 165, 160, 193)/100
+weight.kg <- c(87, 58, 65, 100)
+bmi <- c(weight.kg/height.meter^2); bmi
 meter.to.foot = 3.28084
-tall = over.6foot = c( height.meter*meter.to.foot > 6 ); tall
+tall <- over.6foot <- c( height.meter*meter.to.foot > 6 ); tall
 ```
 
 
@@ -45,7 +45,7 @@ tall = over.6foot = c( height.meter*meter.to.foot > 6 ); tall
 data(cars)
 head(cars,5)
 set.seed(0)
-state = sample( c('NY','CA','CT'), nrow(cars), replace=TRUE )
+state <- sample( c('NY','CA','CT'), nrow(cars), replace=TRUE )
 cars$state <- state; head(cars)
 cars$ratio <- cars$dist/cars$speed; head(cars)
 cat( 'ratio average = ', mean(cars$ratio), '\nratio sd = ', sd(cars$ratio) )
