@@ -1,0 +1,114 @@
+---
+title: "Dplyr_Homework"
+author: "NYC Data Science Academy"
+output: html_document
+---
+## Question #1	
+
+(a) Load `ggplot2` package first and then type `data(mpg)`. Quickly go through the dataset and the help file.
+(b) Obtain a subset of data including: `year, cyl, cty, hwy`, and renames these variables as `V1, V2, V3, V4`.
+(c) Find the average of city miles per gallon (`cty`) and highway miles per gallon (`hwy`) for different numbers of cylinders. (*Hint: the mean function calculates the average of a vector.*)
+(d) For each `manufacturer`, identify the car(s) that have the highest city miles per gallon.
+
+
+```{r warning=FALSE, message = FALSE}
+library(dplyr); library(ggplot2)
+data(mpg)
+# a
+dim(mpg)
+names(mpg)
+head(mpg)
+summary(mpg)
+str(mpg)
+# b
+mpg %>% select(.,v1=year, v2=cyl, v3=cty, v4=hwy)
+# c
+mpg %>% 
+  group_by(., cyl) %>% 
+  summarise(., avgCty=mean(cty), avgHwy=mean(hwy))
+# d
+mpg %>% 
+  group_by(., manufacturer) %>% 
+  summarise(., highestCty=max(cty))
+```
+
+## Question #2
+
+Continuing to use the `mpg` dataset, we want to know the relationship between three variables: *engine displacement* (`displ`), *city miles per gallon* (`cty`), and *highway miles per gallon* (`hwy`).
+
+1. Create a new variable `ratioHVE` showing the ratio between highway miles per gallon and engine displacement.
+2. Create a new variable `ratioCVE` showing the ratio between city miles per gallon and engine displacement.
+3. Obtain the average `ratioHVE` and `ratioCVE` by different years and manufacturers.
+4. Find the biggest `ratioHVE` by different years and `drv`.
+
+
+```{r}
+# 1
+ratioHVE = mpg %>% 
+  select(., manufacturer, year, drv, displ, hwy) %>% 
+  transmute(., manufacturer, year, drv, 'hwy_displ'=hwy/displ)
+# 2
+ratioCVE = mpg %>% 
+  select(., manufacturer, year, displ, cty) %>% 
+  transmute(., manufacturer, year, 'cty_displ'=cty/displ)
+# 3
+ratioHVE %>% 
+  group_by(., manufacturer, year) %>%
+  summarise(., avg_rationHVE=mean(hwy_displ))
+# 4
+ratioHVE %>% 
+  group_by(., year, drv) %>%
+  summarise(., avg_rationHVE=max(hwy_displ))
+
+```
+
+
+## Question #3:
+
+For this question, you are going to explore an online dataset and try to answer the questions. You can find the dataset here: https://data.cityofnewyork.us/City-Government/NYC-Jobs/kpav-sd4t
+
+1. What are the mean and median for the high and low salaries for each agency? Note that salaries can be annual, hourly, or daily. You need to convert all of them to **annual**. (*Hint: if "Hourly", the salary is multiplied by 8x5x4x12, and if "Daily" it is multiplied by 5x4x12.*)
+2. Each job is given a salary range (`Salary.Range.From` and `Salary.Range.To`). Which company has the highest average lower end salary (`Salary.Range.From`)?
+3. Does the type of posting ("internal" or "external") have a big impact on the average salary range? In this case, range is defined as the difference between the high and the low salary for any given job posting.
+4. Rank the `level`s by their average salary range in descending order.
+5. Suppose each agency filled all open positions. Find the range of expenses to pay the salaries of all new hires (label the lower end `min_expenses` and the upper end `max_expenses`). *Hint: Note that each posting lists how many positions are available*.
+6. What `Civil.Service.Title` has the largest posted salary range?
+
+```{r}
+
+nycjobs <- read.csv('n:/dataset/nyc_jobs.csv')
+
+schedule <- data.frame(
+  freq=as.vector(unique(nycjobs$Salary.Frequency)), factor=c(1, 5*4*12, 8*5*4*12))
+
+nycjobs %>%
+  select(., Agency, Salary.Frequency, Salary.Range.From, Salary.Range.To) %>%
+  left_join(., schedule, by=c("Salary.Frequency"="freq")) %>%
+  mutate(., 
+         annSalaryFrom=Salary.Range.From*factor, 
+         annSalaryTo=Salary.Range.To*factor) %>%
+  mutate(., salaryMedian=(annSalaryFrom+annSalaryTo)/2) %>%
+  group_by(.,Agency) %>%
+  summarise(., 
+            minSalary=min(salaryMedian), 
+            maxSalary=max(salaryMedian),
+            meanSalary=mean(salaryMedian), 
+            medianSalary=median(salaryMedian))
+
+```
+
+
+## Challenge Question: 
+
+
+Load the Champion's League dataset, `Champions.csv`. The dataset records 100 League matches between different soccer clubs. Note that this dataset is generated from simulation (not the real match history).
+
+1. Use `filter` to find out rows (games) that home team wins, i.e., `HomeGoal > AwayGoal`. These rows should be stored in a new `tbl_df` object. Also use filter to find out rows that the `HomeTeam` is either "Barcelona" or "Real Madrid".
+2. Use `select` to create a new table which includes all the variables about home team (and excludes variables about away team). Create another table which only includes 6 columns: `HomeTeam`, `AwayTeam`, `HomeGoal`, `AwayGoal`, `HomeCorner`, and `AwayCorner`. *Hint: you may use the argument `starts_with` or `contains` in the function `select`.*
+3. Use `arrange` to reorder the dataset by the number of home goals with the highest listed first, and display the following 6 columns of the reordered data: `HomeTeam`, `AwayTeam`, `HomeGoal`, `AwayGoal`, `HomeCorner`, and `AwayCorner`.
+4. For each `HomeTeam`, find out its average `HomeGoal`, average `HomePossession` (possession rate), and average `HomeYellow` (number of yellow cards). Summarise the results in a table.
+5. (Optional) Find the 5 most frequent final scores (i.e., the ratio of `HomeGoal`:`AwayGoal`). Note that 1:0 should be treated the same as 0:1.
+
+```{r}
+CL = read.csv('https://s3.amazonaws.com/graderdata/Champions.csv', stringsAsFactors=FALSE)
+```
