@@ -1,8 +1,14 @@
+#install.packages('ggplot2')
+library(ggplot2)
+
 #ggplot practices
 
+head(mpg)
+# Set default
 g = ggplot(data = mpg, aes(x = displ, y = hwy))
-g1 = g + geom_point()
-g2 = g1 + geom_smooth(method = "lm")
+
+g + geom_point()
+g + geom_smooth(method = "lm")
 
 ggplot(data = mpg, aes(x = displ, y = hwy)) +
   geom_point() + geom_smooth(method = "lm")
@@ -52,3 +58,8 @@ g + geom_point(aes(color = cut))
 g + geom_point() + geom_density2d()
 g + geom_point() + geom_smooth(aes(color = cut), method = "loess", se = FALSE)
 g + geom_point(size = 0.5, alpha=0.05)
+
+# Iris
+ggplot(data = iris, aes(x = Sepal.Width, y=Sepal.Length, color=Species)) + theme_bw() +
+  stat_density2d(geom='polygon', aes(fill=Species, alpha=..level..), size = 0) +
+  geom_rug(position = 'jitter')

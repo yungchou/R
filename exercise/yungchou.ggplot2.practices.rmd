@@ -1,0 +1,167 @@
+---
+title: "ggplot Tutorial"
+author: "[Yung Chou](http://yungchou.wordpress.com/)"
+output:
+html_document: default
+word_document: default
+pdf_document: default
+---
+
+[Visualization ggplot2](https://www.pinterest.com/nomisroth/visualization-ggplot2/)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+First, install the package and load it into the library. And this tutorial uses the mpg dataset included in ggplot2.
+
+```{r}
+
+#install.packages('ggplot2')
+library(ggplot2)
+
+# RStudio built-in sample file
+head(mpg)
+```
+
+Set the default of a plot. Here, the data source is the mpg dataset, while specifying ***displ*** as the x axis and ***hwy*** as the y. This action sets the default of and does not produce a plot yet.
+
+```{r}
+# Set default
+g <- ggplot(data = mpg, aes(x = displ, y = hwy))
+
+```
+To produce a plot, need to provide the default to layers called  [***geoms***](https://ggplot2.tidyverse.org/reference/#section-layer-geoms) usng '**+**' which works just list piping, **%>%**, in **dplyr**. For example, **geom_point** is to create a scatterplot.
+
+```{r}
+g + geom_point() 
+```
+
+And use **theme** to customize a plot.
+```{r}
+g + geom_point(aes(col=cty, size=displ)) + 
+  labs(
+    title="MPG vs. Engine Displcement", 
+    x="Displacement", 
+    y="Highway MPG", 
+    caption="Source: ggplot sample file") +
+  theme(
+    plot.title=element_text(
+      size=20, 
+      face="bold", 
+      family="Sego UI Light", 
+      color="Blue", 
+      hjust=0.5, 
+      lineheight=1.2), 
+    plot.subtitle=element_text(
+      size=11, 
+      family="Sego UI Light", 
+      face="bold", 
+      hjust=0.5),
+    plot.caption=element_text(size=11),
+    axis.title.x=element_text(size=11, vjust=0),
+    axis.title.y=element_text(size=11),
+    axis.text.x=element_text(size=11, angle = 0, vjust=.5),
+    axis.text.y=element_text(size=11))
+
+```
+
+```{r}
+#library(ggplot2)
+head(diamonds)
+
+g <- ggplot(diamonds, aes(x=carat, y=price))
+
+# With individual colors of smooth lines
+g + geom_point(aes(x=carat, y=price, color=cut)) +
+  geom_smooth(aes(x=carat, y=price, color=cut))    
+
+# With one smooth line for all data
+g + geom_point(aes(x=carat, y=price, color=cut)) +
+  geom_smooth(aes(x=carat, y=price))
+
+ggplot(diamonds, aes(x=carat, y=price, color=cut, shape=color)) +
+  geom_point()
+
+head(mpg)
+
+g <- ggplot(mpg, aes(x=manufacturer, y=hwy))
+
+g + geom_point()
+g + geom_point() + geom_jitter()
+```
+
+
+```{r}
+g + geom_point() + geom_smooth(method = "lm")
+
+```
+
+```{r}
+g + geom_point(aes(color = class))
+g + geom_point(aes(size = class))
+g + geom_point(aes(shape = class))
+g + geom_point(aes(alpha = class))
+```
+
+
+
+```{r}
+g + geom_point() + facet_grid(. ~ cyl)
+g + geom_point() + facet_grid(drv ~ .)
+g + geom_point() + facet_grid(drv ~ cyl)
+g + geom_point() + facet_wrap( ~ class)
+
+```
+
+Now use the diamonds dataset included in ggplot2.
+```{r}
+ggplot(data = diamonds, aes(x = cut)) + geom_bar(aes(fill = cut))
+ggplot(data = diamonds, aes(x = color)) + geom_bar(aes(fill = cut))
+```
+
+```{r}
+g <- ggplot(data = diamonds, aes(x = depth))
+zoom <- coord_cartesian(xlim = c(55, 70))
+g + geom_histogram(binwidth = 0.2) + zoom
+
+```
+
+```{r}
+g + geom_histogram(aes(fill=cut), binwidth = 0.2,
+                   position = position_stack(reverse=TRUE)) + zoom
+
+```
+
+```{r}
+g + geom_histogram(binwidth = 0.2) + facet_wrap( ~ cut) + zoom
+
+```
+
+```{r}
+g + geom_histogram(binwidth = 0.2) + geom_freqpoly(binwidth=0.2) + facet_wrap( ~ cut) + zoom
+
+```
+
+```{r}
+g + geom_freqpoly(aes(color = cut), binwidth = 0.2) + facet_wrap( ~ cut) + zoom
+
+```
+
+```{r}
+g + geom_freqpoly(aes(color = cut), binwidth = 0.2) + zoom
+
+```
+
+```{r}
+g <- ggplot(data = diamonds, aes(x = carat, y = price))
+g + geom_point(aes(color = cut))
+
+```
+
+```{r}
+g + geom_point() + geom_density2d()
+g + geom_point() + geom_smooth(aes(color = cut), method = "loess", se = FALSE)
+g + geom_point(size = 0.5, alpha=0.05)
+
+```
+
