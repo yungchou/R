@@ -1,0 +1,165 @@
+---
+title: "ggplot2 & dplyr"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Quick scatterplot
+
+```{r }
+rm(list = ls())
+
+library(datasets)
+library(ggplot2)
+
+head(iris,3)
+plot(x=iris$Sepal.Length, y=iris$Sepal.Width, 
+     main="Sepal Length-Width", xlab="Sepal Length", ylab="Sepal Width")
+
+```
+
+## Change color and pch:
+
+```{r }
+scatter <- ggplot(data=iris, aes(x = Sepal.Length, y = Sepal.Width)) 
+scatter + geom_point(aes(color=Species, shape=Species)) + 
+  ggtitle("Sepal Length-Width") + xlab("Sepal Length") +  ylab("Sepal Width")
+
+ggplot(data=cars , aes(x=speed, y=dist)) +
+  geom_point(col="red",pch = 17) +   # pch 17 ii the plotting 'character', i.e., symbol to use
+  ggtitle("Speed vs. Stopping Distance") + xlab("Speed (mph)") + ylab("Stopping Distance (ft)")
+  
+```
+
+## Boxplot 
+This is to compactly display the distribution of a continuous variable with five summary statistics: the median, two hinges and two whiskers, and all "outlying" points individually.
+
+```{r}
+
+boxplot(Sepal.Length~Species, data=iris, main="Iris Boxplot", xlab="Species", ylab="Sepal Length" ) 
+
+```
+
+## Create variables based on given conditions
+
+```{r}
+
+data(faithful)
+head(faithful,3)
+
+# Create and set length values based on an eruption of 3.2 minute, for instance
+faithful$length <- ifelse(faithful$eruptions<3.2, "short", "long")
+
+# Set length as categorical data
+faithful$length <-  as.factor(faithful$length)
+class(faithful$length)
+
+head(faithful,3)
+
+```
+
+## Density Plot
+
+A Density Plot visualises the distribution of data over a continuous interval or time period. This chart is a variation of a Histogram that uses kernel smoothing to plot values, allowing for smoother distributions by smoothing out the noise.
+
+Use geom_vline to add a line for the mean.
+
+```{r}
+ggplot(faithful, aes(x=waiting)) +
+  geom_density(aes(fill=length, alpha=0.5)) +
+  geom_vline(aes(xintercept=mean(waiting)),
+            color="blue", linetype="dashed", size=0.5)
+
+ggplot(faithful, aes(x=eruptions, y=waiting)) + 
+  labs(
+    title="Eruption Density", 
+    x="Eruption (min)", 
+    y="Waiting (min)", 
+    caption="Source: faithful dataset") + 
+  geom_jitter(aes(color = length)) + geom_density2d() +
+  geom_smooth()
+
+```
+
+## Histogram
+
+A histogram represents a frequency distribution by means of rectangles whose widths represent class intervals and whose areas are proportional to the corresponding frequencies: the height of each is the average frequency density for the interval.
+
+In a histogram, data is grouped into "bins". To calculate the bin width, find the range (maximum - minimum) and divide that by how many bins you'd like to have. A rough guideline for the number of bins is: take the square root of the number of data values you have.
+
+```{r}
+histogram <- ggplot(data=iris, aes(x=Sepal.Width))
+histogram + geom_histogram(binwidth=0.2, color="black", aes(fill=Species)) + 
+  ggtitle("Histogram of Sepal Width") +  xlab("Sepal Width") +  ylab("Frequency") 
+
+```
+
+```{r}
+p <- ggplot(mpg, aes(class, hwy))
+p + geom_boxplot()
+p + geom_boxplot() + geom_jitter(width = 0.2)
+
+```
+
+## Knicks' wining ratio
+
+Calculate the winning ratio of New York Knicks in different seasons. Visualize how the winning ratio changes every year. (A bar plot is the most appropriate here.)
+
+```{r message=FALSE}
+library(dplyr)
+
+load(url('https://s3.amazonaws.com/graderdata/Knicks.rda'))
+knicks <- tbl_df(data)
+
+knicks1 <- group_by(knicks, season) %>%
+  summarise(ratio=sum(win=="W")/n())
+
+ggplot(knicks1, aes(x=season, y=ratio)) + geom_bar(stat="identity")
+# Use stat = "identity" when y data is a column in a dataset.
+# Default is to count data when setting stat = "bin".
+
+```
+
+Calculate the winning ratio for both home and away games. (The row labelled with visiting = 1 is an away game.) Create a bar plot to show home and away winning ratios for each season.
+
+```{r}
+
+knicks2 <- group_by(knicks, season, visiting) %>%
+  summarise(ratio=sum(win=="W")/n())
+
+ggplot(knicks2, aes(x=season,y=ratio)) +
+  geom_bar(aes(fill=visiting), stat='identity', position='dodge')
+
+```
+
+Plot five histograms to display the distribution of points in each season.
+
+```{r}
+
+ggplot(knicks,aes(x=points)) +
+  geom_histogram(bins=200)+
+  facet_wrap(~season) 
+
+```
+Facet-warp wraps a 1d sequence of panels into 2d.
+(**Challenge**) Calculate the average winning ratio and the average point-difference (i.e., `points-opp`) by each opponent. Create a scatter-plot to show winning ratio versus average point-difference. What pattern do you see in the graph?
+
+```{r}
+
+knicks3 <- group_by(knicks, opponent) %>%
+  summarise(ratio=sum(win=="W")/n(), diff=mean(points-opp))
+
+ggplot(knicks3,aes(x=diff, y=ratio)) +
+  geom_point(color='red4',size=4)+
+  geom_hline(yintercept=0.5,colour='grey20',size=0.5,linetype=2)+
+  geom_vline(xintercept=0,colour='grey20',size=0.5,linetype=2)+
+  geom_text(aes(x=diff,y=ratio,label=opponent),
+            hjust=0.7, vjust=1.4,angle = -30)+
+  theme_bw()
+
+```
+
