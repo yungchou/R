@@ -12,7 +12,7 @@ IsThereNewFile <- function(){
   length(filenames)
 }
 
-ReadAllData=function(){ # A function that calculates the underlying value
+ReadAllData=function(){
 
   filenames <- list.files(pattern="*.csv", full.names=TRUE)
   temp= rbindlist(lapply(filenames, fread))
