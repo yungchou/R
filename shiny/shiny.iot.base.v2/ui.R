@@ -3,6 +3,7 @@ shinyUI(fluidPage(
   tags$h2("Stream Sensor Data",style="text-align:center;color:blue"),
      br(),
      br(),
+
   fluidRow(
         column(width=5, leafletOutput('mytest', height='500px')),
         column(width=5,
@@ -21,7 +22,9 @@ shinyUI(fluidPage(
 
         )
   ),
+
   fluidRow(
     column(6,C3GaugeOutput("gauge1"))
   )
+
 ))

@@ -1,24 +1,25 @@
+library(dplyr)
+library(dygraphs)
 
-threshold = 33
+getwd()
 
+df <- na.omit( read.csv('myIoTSensorData.csv', header = TRUE) ) %>%
+  select( Timestamp, message ) %>%
+  mutate( Timestamp = anytime( as.factor(Timestamp) ) ) %>%
+  mutate( message = as.character(message) )
 
-filenames <- list.files(pattern="*.csv", full.names=TRUE)
-data_at_start <- rbindlist(lapply(filenames, fread))
-ids_at_start <- unique(data_at_start$sensorID)
+df1 <- df$message %>% as.tbl_json %>%
+  gather_array %>%
+  spread_values(
+    msgID = jstring("messageId"),
+    devID = jstring("deviceId"),
+    temperature = jnumber("temperature"),
+    humidity = jnumber("humidity")) %>%
+  select(devID, temperature, humidity)
 
-IsThereNewFile <- function(){
-
-  filenames <- list.files(pattern="*.csv", full.names=TRUE)
-  length(filenames)
-}
-
-ReadAllData=function(){
-
-  filenames <- list.files(pattern="*.csv", full.names=TRUE)
-  temp= rbindlist(lapply(filenames, fread))
-  temp$timestamp =as.POSIXct(as.numeric(as.character(temp$timestamp)),origin="1970-01-01",tz="GMT")
-  temp
-}
+iot_ID <- df1$devID
+iot_temp <- df1$temperature
+iot_humi <- df1$humidity
 
 shinyServer(function(input, output,session) {
 
@@ -35,7 +36,6 @@ shinyServer(function(input, output,session) {
     addMarkers(
       lng=-99.3268, lat=38.8792,
       popup="<b>Howdy from</b><br><a href='http://www.haysusa.com/'>Hays, KS</a>")
-  })
 
   output$myleaflet <- renderLeaflet({
 
@@ -52,7 +52,7 @@ shinyServer(function(input, output,session) {
       addTiles() %>%
       addMarkers(
         data=latslons,
-        label=~as.character(sensorID),
+        label=~as.character(deviceID),
         labelOptions = labelOptions(noHide = T,textOnly = T,textsize = "16px",offset = c(12, -10)) ) %>%
       addMarkers(
         data=latslons,
@@ -69,7 +69,7 @@ shinyServer(function(input, output,session) {
 
     if(nrow(dat)>=1){
       dat[start:end,]%>%ggplot(aes(x=timestamp,y=temperature))+
-        geom_line(aes(color=sensorID))+ylim(26, 34)+
+        geom_line(aes(color=deviceID))+ylim(26, 34)+
         geom_hline(yintercept = threshold,linetype="dotted",color="darkblue")+
         labs(x="",y="Temperature",color="Sensor IDs")+
         theme(axis.title.x = element_blank(),
@@ -82,7 +82,7 @@ shinyServer(function(input, output,session) {
   ids_too_high_reading=reactive({
     dat=alldata()
     temp=filter(dat,timestamp==max(dat$timestamp))
-    ids=temp$sensorID[temp$temperature>100]
+    ids=temp$deviceID[temp$temperature>100]
     ids
 
   })
@@ -90,50 +90,13 @@ shinyServer(function(input, output,session) {
   ids_failed_sensors=reactive({
     dat=alldata()
     temp=filter(dat,timestamp==max(dat$timestamp))
-    ids=unique(temp$sensorID)
+    ids=unique(temp$deviceID)
     previous_ids=new_ids$ids
     previous_ids[!(previous_ids %in% ids)]
 
   })
 
-  observe({
-    if(length(ids_too_high_reading())>0){
-
-      # Verizon: number@vtext.com
-      # AT&T: number@txt.att.net
-      # other carriers: https://20somethingfinance.com/how-to-send-text-messages-sms-via-email-for-free/
-
-    #   send.mail(from = sender,
-    #             to = recipients,
-    #             subject="Sensor Alert: Abnormal reading",
-    #             body =paste("Abnormal reading! Sensor IDs: ",ids_too_high_reading()),
-    #             smtp = list(host.name = "smtp.gmail.com", port = 465,
-    #                         user.name="sender", passwd="password", ssl=TRUE),
-    #             authenticate = TRUE,
-    #             send = TRUE)
-
-        }
-
-  })
-
   new_ids=reactiveValues(ids=ids_at_start)
-
-  observe({
-    if(length(ids_failed_sensors())>0){
-      new_ids$ids=new_ids$ids[!(new_ids$ids %in% ids_failed_sensors())]
-
-      # send.mail(from = sender,
-      #           to = recipients,
-      #           subject="Sensor Alert:Failed Sensors",
-      #           body =paste("Failed Sensors! Sensor IDs: ",ids_failed_sensors()),
-      #           smtp = list(host.name = "smtp.gmail.com", port = 465,
-      #                       user.name="sender email", passwd="password", ssl=TRUE),
-      #           authenticate = TRUE,
-      #           send = TRUE)
-
-    }
-
-  })
 
   output$Too_High <-  renderText({
 
