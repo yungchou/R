@@ -1,5 +1,7 @@
 library(shiny)
-library(ggplot2)
+library(ggplot2, plotly)
+library(dygraphs)
+library(xts)    # To make the conversion data-frame / xts format
 
 datasets <- "package:datasets"
 num_vars <- c("carat", "depth", "table", "price", "x", "y", "z")
@@ -136,6 +138,7 @@ server <- function(input, output, session) {
       geom_point(position = ggforce::position_auto()) +
       geom_smooth()
   }, res = 96)
+  
   
   # Upload
   

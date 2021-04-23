@@ -5,7 +5,7 @@ if (!require("RColorBrewer")) {
 }
 
 library(dygraphs)
-library(xts)    # To make the convertion data-frame / xts format
+library(xts)    # To make the conversion data-frame / xts format
 
 sim_rt_files <- read.csv(
   'N:/code/R/shiny/shiny.iot.base.v2/iot_sample_data.csv',
