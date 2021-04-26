@@ -1,5 +1,6 @@
 library(shiny)
-library(ggplot2, plotly)
+library(ggplot2)
+library(plotly)
 library(dygraphs)
 library(xts)    # To make the conversion data-frame / xts format
 
@@ -48,7 +49,7 @@ ui <- fluidPage(
                  selectInput("plotY", "Y", choices = names(iris))
                ),
                mainPanel(
-                 plotOutput("plotIt")
+                 plotlyOutput("plotIt")
                )
              )
     ),
@@ -98,7 +99,7 @@ ui <- fluidPage(
         )
       ),
       fluidRow(
-        column(9, plotOutput("hist")),
+        column(9, plotlyOutput("hist")),
         column(3, verbatimTextOutput("ttest"))
       )
     ),
@@ -109,16 +110,15 @@ ui <- fluidPage(
                column(4, 
                       numericInput("lambda1", label = "lambda1", value = 3),
                       numericInput("lambda2", label = "lambda2", value = 5),
-                      numericInput("n", label = "n", value = 1e4, min = 0)
+                      numericInput("nn", label = "nn", value = 1e4, min = 0)
                ),
                column(8,
-                 fluidRow(plotOutput("reactive_hist")),
-                 fluidRow(plotOutput("timer_hist"))
-                      )
+                 fluidRow(plotlyOutput("reactive_hist")),
+                 fluidRow(plotlyOutput("timer_hist"))
+               )
              )
     )
-  )    
-
+  )
 )
 
 server <- function(input, output, session) {
@@ -133,13 +133,14 @@ server <- function(input, output, session) {
   output$evalOutput <- renderTable(head(evalResultTable()))
   
   # Plot
-  output$plotIt <- renderPlot({
-    ggplot(iris, aes(.data[[input$plotX]], .data[[input$plotY]])) +
-      geom_point(position = ggforce::position_auto()) +
-      geom_smooth()
-  }, res = 96)
-  
-  
+  output$plotIt <- renderPlotly(
+    ggplotly(
+      ggplot(iris, aes(.data[[input$plotX]], .data[[input$plotY]])) +
+        geom_point(position = ggforce::position_auto()) +
+        geom_smooth()
+    )  
+  )
+      
   # Upload
   
   # Download
@@ -162,17 +163,19 @@ server <- function(input, output, session) {
   )
   
   # App1
-  library(ggplot2)
+  library(ggplot2, plotly)
   
   freqpoly <- function(x1, x2, binwidth = 0.1, xlim = c(-3, 3)) {
     df <- data.frame(
       x = c(x1, x2),
       g = c(rep("x1", length(x1)), rep("x2", length(x2)))
     )
-    
-    ggplot(df, aes(x, colour = g)) +
-      geom_freqpoly(binwidth = binwidth, size = 1) +
-      coord_cartesian(xlim = xlim)
+    ggplotly(
+      ggplot(df, aes(x, colour = g)) +
+        geom_freqpoly(binwidth = binwidth, size = 1) +
+        coord_cartesian(xlim = xlim)      
+    )
+
   }
   
   t_test <- function(x1, x2) {
@@ -185,12 +188,12 @@ server <- function(input, output, session) {
     )
   }
   
-  output$hist <- renderPlot({
+  output$hist <- renderPlotly({
     x1 <- rnorm(input$n1, input$mean1, input$sd1)
     x2 <- rnorm(input$n2, input$mean2, input$sd2)
     
     freqpoly(x1, x2, binwidth = input$binwidth, xlim = input$range)
-  }, res = 96)
+  })
   
   output$ttest <- renderText({
     x1 <- rnorm(input$n1, input$mean1, input$sd1)
@@ -201,26 +204,29 @@ server <- function(input, output, session) {
   
   # Timer
   library(ggplot2)
+  library(plotly)
   
-  freqpoly <- function(x1, x2, binwidth = 0.1, xlim = c(-3, 3)) {
+  freq_poly <- function(x1, x2, binwidth = 0.1, xlim = c(-3, 3)) {
     df <- data.frame(
       x = c(x1, x2),
       g = c(rep("x1", length(x1)), rep("x2", length(x2)))
     )
-    
-    ggplot(df, aes(x, colour = g)) +
-      geom_freqpoly(binwidth = binwidth, size = 1) +
-      coord_cartesian(xlim = xlim) +
-      theme(legend.position = c(.9, .85))
-      #theme(legend.position = 'bottom')
+    ggplotly(
+      ggplot(df, aes(x, colour = g)) +
+        geom_freqpoly(binwidth = binwidth, size = 1) +
+        coord_cartesian(xlim = xlim) +
+        #theme(legend.position = c(.9, .85))'
+        #theme(legend.position = "none")  # remove all legends
+        theme(legend.position = "top")
+    )
   }
   
   # Reactive without delay, i.e. no simulation effect
-  rx1 <- reactive(rpois(input$n, input$lambda1))
-  rx2 <- reactive(rpois(input$n, input$lambda2))
-  output$reactive_hist <- renderPlot({
-    freqpoly(rx1(), rx2(), binwidth = 1, xlim = c(0, 40))
-  }, res = 96)
+  rx1 <- reactive(rpois(input$nn, input$lambda1))
+  rx2 <- reactive(rpois(input$nn, input$lambda2))
+  output$reactive_hist <- renderPlotly(
+    freq_poly(rx1(), rx2(), binwidth = 1, xlim = c(0, 40))
+  )
   
   # The following code uses an interval of 500 ms 
   # so that the plot will update twice a second. 
@@ -232,16 +238,16 @@ server <- function(input, output, session) {
   
   tx1 <- reactive({
     timer()
-    rpois(input$n, input$lambda1)
+    rpois(input$nn, input$lambda1)
   })
   tx2 <- reactive({
     timer()
-    rpois(input$n, input$lambda2)
+    rpois(input$nn, input$lambda2)
   })
   
-  output$timer_hist <- renderPlot({
-    freqpoly(tx1(), tx2(), binwidth = 1, xlim = c(0, 40))
-  }, res = 96)
+  output$timer_hist <- renderPlotly(
+    freq_poly(tx1(), tx2(), binwidth = 1, xlim = c(0, 40))
+  )
 }
 
 shinyApp(ui, server)
