@@ -13,111 +13,126 @@ ui <- fluidPage(
   # themes: darkly, sandstone, flatly, united
   
   tabsetPanel(id="inputMethods",
-              
-              tabPanel("Dataset",
-                       #"Ref: mastering-shiny.org/action-tidy.html",      
-                       sidebarLayout(
-                         sidebarPanel(
-                           selectInput("thisDf", label = "Select a dataset", choices = ls(datasets))
-                         ),
-                         mainPanel(
-                           verbatimTextOutput("dfSummary"),
-                           tableOutput("tableOut")      
-                         )
-                       )
-              ),
-              
-              
-              tabPanel("Eval",
-                       #"Ref: mastering-shiny.org/action-tidy.html",      
-                       sidebarLayout(
-                         sidebarPanel(
-                           selectInput("evalVar", "Variable", choices = num_vars),
-                           numericInput("evalMin", "Minimum", value = 1),
-                         ),
-                         mainPanel(
-                           tableOutput("evalOutput")
-                         )
-                       )
-              ),
-              
-              tabPanel("Plot",
-                       #"Ref: mastering-shiny.org/action-tidy.html",      
-                       sidebarLayout(
-                         sidebarPanel(
-                           selectInput("plotX", "X", choices = names(iris)),
-                           selectInput("plotY", "Y", choices = names(iris))
-                         ),
-                         mainPanel(
-                           plotlyOutput("plotIt")
-                         )
-                       )
-              ),
-              
-              tabPanel("Upload",
-                       #"Ref: mastering-shiny.org/action-transfer.html",      
-                       sidebarLayout(
-                         sidebarPanel(
-                         ),
-                         mainPanel(
-                         )
-                       )
-              ),
-              
-              tabPanel("Download",
-                       #"Ref: mastering-shiny.org/action-transfer.html",      
-                       sidebarLayout(
-                         sidebarPanel(
-                           selectInput("thatDf", label = "Select a dataset", choices = ls(datasets))
-                         ),
-                         mainPanel(
-                           downloadButton("theDownload", "Download the file"),
-                           tableOutput("previewThatDf")
-                         )
-                       )
-              ),
-              
-              tabPanel("App1",
-                       #"Ref: mastering-shiny.org/basic-reactivity.html",      
-                       fluidRow(
-                         column(4, 
-                                "Distribution 1",
-                                numericInput("n1", label = "n", value = 1000, min = 1),
-                                numericInput("mean1", label = "µ", value = 0, step = 0.1),
-                                numericInput("sd1", label = "σ", value = 0.5, min = 0.1, step = 0.1)
-                         ),
-                         column(4, 
-                                "Distribution 2",
-                                numericInput("n2", label = "n", value = 1000, min = 1),
-                                numericInput("mean2", label = "µ", value = 0, step = 0.1),
-                                numericInput("sd2", label = "σ", value = 0.5, min = 0.1, step = 0.1)
-                         ),
-                         column(4,
-                                "Frequency polygon",
-                                numericInput("binwidth", label = "Bin width", value = 0.1, step = 0.1),
-                                sliderInput("range", label = "range", value = c(-3, 3), min = -5, max = 5)
-                         )
-                       ),
-                       fluidRow(
-                         column(9, plotlyOutput("hist")),
-                         column(3, verbatimTextOutput("ttest"))
-                       )
-              ),
-              
-              tabPanel("Timer",
-                       #"Ref: mastering-shiny.org/basic-reactivity.html",      
-                       fluidRow(
-                         column(4, 
-                                numericInput("lambda1", label = "lambda1", value = 3),
-                                numericInput("lambda2", label = "lambda2", value = 5),
-                                numericInput("nn", label = "nn", value = 1e4, min = 0)
-                         ),
-                         column(8,
-                                fluidRow(plotlyOutput("reactive_hist")),
-                                fluidRow(plotlyOutput("timer_hist"))
-                         )
-                       )
-              )
+
+    tabPanel("Dataset",
+      #"Ref: mastering-shiny.org/action-tidy.html",      
+      sidebarLayout(
+        sidebarPanel(
+          selectInput("thisDf", label = "Select a dataset", choices = ls(datasets))
+         ),
+        mainPanel(
+          verbatimTextOutput("dfSummary"),
+          tableOutput("tableOut")      
+        )
+      )
+    ),
+    
+ 
+    tabPanel("Eval",
+      #"Ref: mastering-shiny.org/action-tidy.html",      
+      sidebarLayout(
+        sidebarPanel(
+         selectInput("evalVar", "Variable", choices = num_vars),
+         numericInput("evalMin", "Minimum", value = 1),
+        ),
+        mainPanel(
+         tableOutput("evalOutput")
+        )
+      )
+    ),
+    
+    tabPanel("Plot",
+             #"Ref: mastering-shiny.org/action-tidy.html",      
+             sidebarLayout(
+               sidebarPanel(
+                 selectInput("plotX", "X", choices = names(iris)),
+                 selectInput("plotY", "Y", choices = names(iris))
+               ),
+               mainPanel(
+                 plotlyOutput("plotIt")
+               )
+             )
+    ),
+    
+    tabPanel("Upload",
+             #"Ref: mastering-shiny.org/action-transfer.html",      
+             sidebarLayout(
+               sidebarPanel(
+                 fileInput("uploadFiles", NULL, buttonLabel = "Upload...", multiple = TRUE),
+                 tableOutput("uploadedFiles")
+               ),
+               mainPanel(
+               )
+             )
+    ),
+    
+    tabPanel("Download",
+             #"Ref: mastering-shiny.org/action-transfer.html",      
+             sidebarLayout(
+               sidebarPanel(
+                 selectInput("thatDf", label = "Select a dataset", choices = ls(datasets))
+               ),
+               mainPanel(
+                 downloadButton("theDownload", "Download the file"),
+                 tableOutput("previewThatDf")
+               )
+             )
+    ),
+             
+    tabPanel("App1",
+      #"Ref: mastering-shiny.org/basic-reactivity.html",      
+      fluidRow(
+        column(4, 
+               "Distribution 1",
+               numericInput("n1", label = "n", value = 1000, min = 1),
+               numericInput("mean1", label = "µ", value = 0, step = 0.1),
+               numericInput("sd1", label = "σ", value = 0.5, min = 0.1, step = 0.1)
+        ),
+        column(4, 
+               "Distribution 2",
+               numericInput("n2", label = "n", value = 1000, min = 1),
+               numericInput("mean2", label = "µ", value = 0, step = 0.1),
+               numericInput("sd2", label = "σ", value = 0.5, min = 0.1, step = 0.1)
+        ),
+        column(4,
+               "Frequency polygon",
+               numericInput("binwidth", label = "Bin width", value = 0.1, step = 0.1),
+               sliderInput("range", label = "range", value = c(-3, 3), min = -5, max = 5)
+        )
+      ),
+      fluidRow(
+        column(9, plotlyOutput("hist")),
+        column(3, verbatimTextOutput("ttest"))
+      )
+    ),
+    
+    tabPanel("App2",
+      #"Ref: mastering-shiny.org/action-transfer.html",      
+      sidebarLayout(
+       sidebarPanel(
+         selectInput("app2Var", "Select variable", choices = names(mtcars)),
+         sliderInput("app2Min", "Minimum value", 0, min = 0, max = 100),
+         selectInput("app2Sort", "Sort by", choices = names(mtcars)),
+         actionButton("app2Reset", "Reset")
+       ),
+       mainPanel( tableOutput("app2Data") )
+      )
+    ),
+             
+    tabPanel("Timer",
+             #"Ref: mastering-shiny.org/basic-reactivity.html",      
+             fluidRow(
+               column(4, 
+                      numericInput("lambda1", label = "lambda1", value = 3),
+                      numericInput("lambda2", label = "lambda2", value = 5),
+                      numericInput("nn", label = "nn", value = 1e4, min = 0)
+               ),
+               column(8,
+                 fluidRow(plotlyOutput("reactive_hist")),
+                 fluidRow(plotlyOutput("timer_hist"))
+               )
+             )
+    )
   )
 )
 
@@ -140,8 +155,9 @@ server <- function(input, output, session) {
         geom_smooth()
     )  
   )
-  
+      
   # Upload
+  output$uploadedFiles <- renderTable(input$uploadFiles)
   
   # Download
   theDownload <- reactive({
@@ -156,7 +172,7 @@ server <- function(input, output, session) {
     head(theDownload())
   })
   
-  
+    
   output$theDownload <- downloadHandler(
     paste0(input$thatDf, ".tsv"),
     content = function(file){ vroom::vroom_write(theDownload(), file) }
@@ -175,7 +191,7 @@ server <- function(input, output, session) {
         geom_freqpoly(binwidth = binwidth, size = 1) +
         coord_cartesian(xlim = xlim)      
     )
-    
+
   }
   
   t_test <- function(x1, x2) {
@@ -200,6 +216,29 @@ server <- function(input, output, session) {
     x2 <- rnorm(input$n2, input$mean2, input$sd2)
     
     t_test(x1, x2)
+  })
+  
+  # App2
+  observeEvent(input$app2Reset, {
+    updateSliderInput(inputId = "app2Var", value=names(mtcars)[1])
+    updateSliderInput(inputId = "app2Min", value=0)
+    updateSliderInput(inputId = "app2Sort", value=names(mtcars)[1])
+  })
+  
+  observeEvent(input$app2Var, {
+  rng <- range(mtcars[[input$app2Var]])
+  updateSliderInput(
+    session, "min", 
+    value = rng[[1]], 
+    min = rng[[1]], 
+    max = rng[[2]]
+  )
+})
+  
+  output$app2Data <- renderTable({
+    mtcars %>% 
+      filter(.data[[input$app2Var]] > input$app2Min) %>% 
+      arrange(.data[[input$app2Sort]])
   })
   
   # Timer

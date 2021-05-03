@@ -1,4 +1,5 @@
 library(shiny)
+library(shinydashboard)
 library(ggplot2)
 library(plotly)
 library(dygraphs)
@@ -58,9 +59,11 @@ ui <- fluidPage(
              #"Ref: mastering-shiny.org/action-transfer.html",      
              sidebarLayout(
                sidebarPanel(
+                 fileInput("uploadFiles", NULL, buttonLabel = "Upload...", multiple = TRUE),
                ),
                mainPanel(
-               )
+                  tableOutput("uploadedFiles")
+              )
              )
     ),
     
@@ -104,6 +107,19 @@ ui <- fluidPage(
       )
     ),
     
+    tabPanel("App2",
+      #"Ref: mastering-shiny.org/action-transfer.html",      
+      sidebarLayout(
+       sidebarPanel(
+         selectInput("app2Var", "Select variable", choices = names(mtcars)),
+         sliderInput("app2Min", "Minimum value", 0, min = 0, max = 100),
+         selectInput("app2Sort", "Sort by", choices = names(mtcars)),
+         actionButton("app2Reset", "Reset")
+       ),
+       mainPanel( tableOutput("app2Data") )
+      )
+    ),
+    
     tabPanel("Timer",
              #"Ref: mastering-shiny.org/basic-reactivity.html",      
              fluidRow(
@@ -113,9 +129,17 @@ ui <- fluidPage(
                       numericInput("nn", label = "nn", value = 1e4, min = 0)
                ),
                column(8,
-                 fluidRow(plotlyOutput("reactive_hist")),
-                 fluidRow(plotlyOutput("timer_hist"))
+                      fluidRow(plotlyOutput("reactive_hist")),
+                      fluidRow(plotlyOutput("timer_hist"))
                )
+             )
+    ),
+    
+    tabPanel("sys.info()",
+             #"Ref: mastering-shiny.org/basic-reactivity.html",      
+             fluidRow(
+               column(4, h2("Sys.info()")),
+               column(8, tableOutput("sysinfo"))
              )
     )
   )
@@ -124,6 +148,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   # File
+  {
   df <- reactive({ get(input$thisDf, datasets) })
   output$dfSummary <- renderPrint({ summary(df()) })
   output$tableOut  <- renderTable({ df() })
@@ -131,123 +156,166 @@ server <- function(input, output, session) {
   # Eval
   evalResultTable <- reactive(diamonds %>% filter(.data[[input$evalVar]] > .env$input$evalMin))
   output$evalOutput <- renderTable(head(evalResultTable()))
+  }
   
   # Plot
-  output$plotIt <- renderPlotly(
+  output$plotIt <- renderPlotly({
     ggplotly(
       ggplot(iris, aes(.data[[input$plotX]], .data[[input$plotY]])) +
         geom_point(position = ggforce::position_auto()) +
         geom_smooth()
-    )  
-  )
+    )})
       
   # Upload
+  output$uploadedFiles <- renderTable(input$uploadFiles)
   
   # Download
-  theDownload <- reactive({
-    out <- get(input$thatDf, datasets)
-    if (!is.data.frame(out)) {
-      validate(paste0("'", input$thatDf, "' is not a data frame"))
-    }
-    out
-  })
-  
-  output$previewThatDf <- renderTable({
-    head(theDownload())
-  })
-  
+  {
+    theDownload <- reactive({
+      out <- get(input$thatDf, datasets)
+      if (!is.data.frame(out)) {
+        validate(paste0("'", input$thatDf, "' is not a data frame"))
+      }
+      out
+    })
     
-  output$theDownload <- downloadHandler(
-    paste0(input$thatDf, ".tsv"),
-    content = function(file){ vroom::vroom_write(theDownload(), file) }
-  )
+    output$previewThatDf <- renderTable({
+      head(theDownload())
+    })
+    
+      
+    output$theDownload <- downloadHandler(
+      paste0(input$thatDf, ".tsv"),
+      content = function(file){ vroom::vroom_write(theDownload(), file) }
+    )
+  }
   
   # App1
-  library(ggplot2, plotly)
+  {
+    library(ggplot2, plotly)
+    
+    freqpoly <- function(x1, x2, binwidth = 0.1, xlim = c(-3, 3)) {
+      df <- data.frame(
+        x = c(x1, x2),
+        g = c(rep("x1", length(x1)), rep("x2", length(x2)))
+      )
+      ggplotly(
+        ggplot(df, aes(x, colour = g)) +
+          geom_freqpoly(binwidth = binwidth, size = 1) +
+          coord_cartesian(xlim = xlim)      
+      )
   
-  freqpoly <- function(x1, x2, binwidth = 0.1, xlim = c(-3, 3)) {
-    df <- data.frame(
-      x = c(x1, x2),
-      g = c(rep("x1", length(x1)), rep("x2", length(x2)))
-    )
-    ggplotly(
-      ggplot(df, aes(x, colour = g)) +
-        geom_freqpoly(binwidth = binwidth, size = 1) +
-        coord_cartesian(xlim = xlim)      
-    )
+    }
+    
+    t_test <- function(x1, x2) {
+      test <- t.test(x1, x2)
+      
+      # use sprintf() to format t.test() results compactly
+      sprintf(
+        "p value: %0.3f\n[%0.2f, %0.2f]",
+        test$p.value, test$conf.int[1], test$conf.int[2]
+      )
+    }
+    
+    output$hist <- renderPlotly({
+      x1 <- rnorm(input$n1, input$mean1, input$sd1)
+      x2 <- rnorm(input$n2, input$mean2, input$sd2)
+      
+      freqpoly(x1, x2, binwidth = input$binwidth, xlim = input$range)
+    })
+    
+    output$ttest <- renderText({
+      x1 <- rnorm(input$n1, input$mean1, input$sd1)
+      x2 <- rnorm(input$n2, input$mean2, input$sd2)
+      
+      t_test(x1, x2)
+    })
+  }
 
-  }
-  
-  t_test <- function(x1, x2) {
-    test <- t.test(x1, x2)
+  # App2
+  {
+    # Ref: mastering-shiny.org/action-tidy.html
+    observeEvent(input$app2Reset, {
+      updateSliderInput(inputId = "app2Var", value=names(mtcars)[1])
+      updateSliderInput(inputId = "app2Min", value=0)
+      updateSliderInput(inputId = "app2Sort", value=names(mtcars)[1])
+    })
     
-    # use sprintf() to format t.test() results compactly
-    sprintf(
-      "p value: %0.3f\n[%0.2f, %0.2f]",
-      test$p.value, test$conf.int[1], test$conf.int[2]
+    observeEvent(input$app2Var, {
+    rng <- range(mtcars[[input$app2Var]])
+    updateSliderInput(
+      session, "min", 
+      value = rng[[1]], 
+      min = rng[[1]], 
+      max = rng[[2]]
     )
+  })
+    
+    output$app2Data <- renderTable({
+      mtcars %>% 
+        filter(.data[[input$app2Var]] > input$app2Min) %>% 
+        arrange(.data[[input$app2Sort]])
+    })
+    
   }
-  
-  output$hist <- renderPlotly({
-    x1 <- rnorm(input$n1, input$mean1, input$sd1)
-    x2 <- rnorm(input$n2, input$mean2, input$sd2)
-    
-    freqpoly(x1, x2, binwidth = input$binwidth, xlim = input$range)
-  })
-  
-  output$ttest <- renderText({
-    x1 <- rnorm(input$n1, input$mean1, input$sd1)
-    x2 <- rnorm(input$n2, input$mean2, input$sd2)
-    
-    t_test(x1, x2)
-  })
   
   # Timer
-  library(ggplot2)
-  library(plotly)
-  
-  freq_poly <- function(x1, x2, binwidth = 0.1, xlim = c(-3, 3)) {
-    df <- data.frame(
-      x = c(x1, x2),
-      g = c(rep("x1", length(x1)), rep("x2", length(x2)))
-    )
-    ggplotly(
-      ggplot(df, aes(x, colour = g)) +
-        geom_freqpoly(binwidth = binwidth, size = 1) +
-        coord_cartesian(xlim = xlim) +
-        #theme(legend.position = c(.9, .85))'
-        #theme(legend.position = "none")  # remove all legends
-        theme(legend.position = "top")
-    )
+  {
+    library(ggplot2)
+    library(plotly)
+    
+    freq_poly <- function(x1, x2, binwidth = 0.1, xlim = c(-3, 3)) {
+      df <- data.frame(
+        x = c(x1, x2),
+        g = c(rep("x1", length(x1)), rep("x2", length(x2)))
+      )
+      ggplotly(
+        ggplot(df, aes(x, colour = g)) +
+          geom_freqpoly(binwidth = binwidth, size = 1) +
+          coord_cartesian(xlim = xlim) +
+          #theme(legend.position = c(.9, .85))'
+          #theme(legend.position = "none")  # remove all legends
+          theme(legend.position = "top")
+      )
+    }
   }
-  
+
   # Reactive without delay, i.e. no simulation effect
-  rx1 <- reactive(rpois(input$nn, input$lambda1))
-  rx2 <- reactive(rpois(input$nn, input$lambda2))
-  output$reactive_hist <- renderPlotly(
-    freq_poly(rx1(), rx2(), binwidth = 1, xlim = c(0, 40))
-  )
-  
-  # The following code uses an interval of 500 ms 
-  # so that the plot will update twice a second. 
-  # This is fast enough to remind you that you're 
-  # looking at a simulation, without dizzying you 
-  # with rapid changes. 
-  
-  timer <- reactiveTimer(500)
-  
-  tx1 <- reactive({
-    timer()
-    rpois(input$nn, input$lambda1)
+  {
+    rx1 <- reactive(rpois(input$nn, input$lambda1))
+    rx2 <- reactive(rpois(input$nn, input$lambda2))
+    output$reactive_hist <- renderPlotly(
+      freq_poly(rx1(), rx2(), binwidth = 1, xlim = c(0, 40))
+    )
+    
+    # The following code uses an interval of 500 ms 
+    # so that the plot will update twice a second. 
+    # This is fast enough to remind you that you're 
+    # looking at a simulation, without dizzying you 
+    # with rapid changes. 
+    
+    timer <- reactiveTimer(500)
+    
+    tx1 <- reactive({
+      timer()
+      rpois(input$nn, input$lambda1)
+    })
+    tx2 <- reactive({
+      timer()
+      rpois(input$nn, input$lambda2)
+    })
+    
+    output$timer_hist <- renderPlotly(
+      freq_poly(tx1(), tx2(), binwidth = 1, xlim = c(0, 40))
+    )
+        
+  }
+
+  # Sys.info
+  output$sysinfo <- renderTable({
+    sysinfoDf<-data.frame(sys.info())
+    sysinfoDf
   })
-  tx2 <- reactive({
-    timer()
-    rpois(input$nn, input$lambda2)
-  })
-  
-  output$timer_hist <- renderPlotly(
-    freq_poly(tx1(), tx2(), binwidth = 1, xlim = c(0, 40))
-  )
 }
 
 shinyApp(ui, server)
