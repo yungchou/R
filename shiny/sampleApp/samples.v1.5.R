@@ -1,10 +1,24 @@
-library(shiny)
-library(shinydashboard)
-library(ggplot2)
-library(plotly)
-library(dygraphs)
-library(xts)    # To make the conversion data-frame / xts format
-
+pkgs <- c(
+   "shiny","shinydashboard"
+  ,"ggplot2","plotly","dygraphs"
+  ,"tidyr","dplyr"
+  ,"rattle","magrittr"
+  ,"readr","readxl","xlsx"
+  #,"xts"    # To make the conversion data-frame / xts format
+  #  ,"usmap"
+  #  ,"proto"
+  #  ,"gsubfn"
+  #  ,"stringr"
+  #  ,"RCurl"
+  #  ,"RJSONIO"
+  #  ,"sqldf"
+)
+for (i in pkgs){
+  if(! i %in% installed.packages()){
+    install.packages(i, dependencies = TRUE)
+  }
+  require(i)
+}
 datasets <- "package:datasets"
 num_vars <- c("carat", "depth", "table", "price", "x", "y", "z")
 
@@ -28,7 +42,19 @@ ui <- fluidPage(
       )
     ),
     
- 
+    tabPanel("Perfmon Log",
+             #"Ref: mastering-shiny.org/action-tidy.html",
+             sidebarLayout(
+               sidebarPanel(
+                 selectInput("holding", label = "Select a log", choices = c('a','b','c'))
+               ),
+               mainPanel(
+                 #verbatimTextOutput("logSummary"),
+                 tableOutput("logOutput")      
+               )
+             )
+    ),
+    
     tabPanel("Eval",
       #"Ref: mastering-shiny.org/action-tidy.html",      
       sidebarLayout(
@@ -156,6 +182,18 @@ server <- function(input, output, session) {
   # Eval
   evalResultTable <- reactive(diamonds %>% filter(.data[[input$evalVar]] > .env$input$evalMin))
   output$evalOutput <- renderTable(head(evalResultTable()))
+  }
+  
+  # Perfmon Log
+  {
+    theLog <- read.csv('perfmon.log.sample.csv', header = TRUE)
+    #theLog <- reactive({ get(input$thisLog, logs) })
+    output$logSummary <- renderPrint({ summary(theLog()) })
+    output$logOut  <- renderTable({ theLog() })
+    
+    # Eval
+    evalResultLog <- reactive(diamonds %>% filter(.data[[input$logVar]] > .env$input$logMin))
+    output$logOutput <- renderTable(head(evalResultLog()))
   }
   
   # Plot
