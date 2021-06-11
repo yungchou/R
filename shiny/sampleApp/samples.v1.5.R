@@ -2,7 +2,7 @@
 # Libraries
 #-----------
 mylib <- c(
-  "shiny","shinydashboard" #,"rattle"
+  "shiny","shinydashboard","rattle"
   ,"ggplot2","plotly","dygraphs"
   ,"tidyr","dplyr"
   ,"readr","readxl","xlsx"
@@ -210,9 +210,7 @@ ui <- fluidPage(
          ))
    )
    
-  }
-  
-  )
+  })
   
 )
 
@@ -406,9 +404,9 @@ server <- function(input, output, session) {
 
   # REF of Reactive, OBserve
   {
-    # Create a reactive Evironment. Note that we can call the varaible outside same place
-    # where it was created by calling Reactive_Var(). When the varaible is called by
-    # renderTable is when it is evaluated. No real diffrence on the surface, all in the server.
+    # Create a reactive Environment. Note that we can call the variable outside same place
+    # where it was created by calling Reactive_Var(). When the variable is called by
+    # renderTable is when it is evaluated. No real difference on the surface, all in the server.
     
     Reactive_Var<-reactive({c(input$Test_R, input$Test_R2, input$Test_R3)})
     
@@ -416,8 +414,8 @@ server <- function(input, output, session) {
       Reactive_Var()
     })
     
-    # Create an observe Evironment. Note that we cannot access the created "df" outside 
-    # of the env. A, B,and C will update with any input into any of the three Text Feilds.
+    # Create an observe Environment. Note that we cannot access the created "df" outside 
+    # of the env. A, B,and C will update with any input into any of the three Text Fields.
     observe({
       A<-input$Test
       B<-input$Test2
