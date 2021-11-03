@@ -1,21 +1,23 @@
 #-----------
 # Libraries
 #-----------
-mylib <- c(
-  "shiny","shinydashboard","rattle"
-  ,"ggplot2","plotly","dygraphs"
-  ,"tidyr","dplyr"
-  ,"readr","readxl","xlsx"
-  #,"xts"    # To make the conversion data-frame / xts format
-  #,"usmap"
-  #,"proto"
-  #,"gsubfn"
-  #,"stringr"
-  #,"RCurl"
-  #,"RJSONIO"
-  #,"sqldf"
-  #,"magrittr"
-)
+{
+  mylib <- c(
+    "shiny","shinydashboard" #,"rattle"
+    ,"ggplot2","plotly","dygraphs"
+    ,"tidyr","dplyr"
+    ,"readr","readxl","xlsx"
+    #,"xts"    # To make the conversion data-frame / xts format
+    #,"usmap"
+    #,"proto"
+    #,"gsubfn"
+    #,"stringr"
+    #,"RCurl"
+    #,"RJSONIO"
+    #,"sqldf"
+    #,"magrittr"
+  )  
+}
 
 #---------------------------
 # Routine to load libraries
@@ -29,8 +31,12 @@ mylib <- c(
 #------------
 # REFERENCES
 #------------
+{
 # Shiny HTML Tags: https://shiny.rstudio.com/articles/tag-glossary.html
 # Bootstrap Style: http://bootstrapdocs.com/v3.3.6/docs/css/
+# Shiny app style guide: https://shiny.rstudio.com/articles/layout-guide.html
+  
+}
 
 #-----------------
 # Referenced data
@@ -118,11 +124,8 @@ ui <- fluidPage(
       )
     })
    
-    # Reactive 
-   ,{
-     tabPanel("Reactive",
-      #"Ref: mastering-shiny.org/basic-reactivity.html",      
-      fluidRow(
+    #"Ref: mastering-shiny.org/basic-reactivity.html",      
+   ,tabPanel("Reactive", {fluidRow(
         column(4,
                "Distribution 1",
                numericInput("n1", label = "n", value = 1000, min = 1),
@@ -138,27 +141,20 @@ ui <- fluidPage(
                numericInput("binwidth", label = "Bin width", value = 0.1, step = 0.1),
                sliderInput("range", label = "range", value = c(-3, 3), min = -5, max = 5)
         )
-      ),
-      fluidRow(
+      )}, {fluidRow(
         column(9, plotlyOutput("hist")
       ),column(3, verbatimTextOutput("ttest"))
-      )
-    )
-   }
+      )})
    
-    # Simulation
-   ,{
-     tabPanel("Simulation",
-      #"Ref: mastering-shiny.org/basic-reactivity.html",      
-      fluidRow(
+    #"Ref: mastering-shiny.org/basic-reactivity.html",      
+   ,tabPanel("Simulation", {fluidRow(
         column(4,numericInput("lambda1", label = "lambda1", value = 3))
        ,column(4,numericInput("lambda2", label = "lambda2", value = 5))
        ,column(4,numericInput("nn", label = "nn", value = 1e4, min = 0))
-        ),
-      fluidRow(plotlyOutput("reactive_hist")),
-      fluidRow(plotlyOutput("timer_hist"))
-    )
-   }
+        )}, {
+          fluidRow(plotlyOutput("reactive_hist"))
+        }, {fluidRow(plotlyOutput("timer_hist"))
+        })
    
    ,tabPanel("Dynamic UI", {
       #"Ref: mastering-shiny.org/action-transfer.html",      
@@ -174,46 +170,54 @@ ui <- fluidPage(
       )
     })
    
-   # REF
-   ,{
-   tabPanel("Ref", 
-       fluidRow(
-         column(4,
-                h2("Reactive Test"),
-                textInput("Test_R","Test_R"),
-                textInput("Test_R2","Test_R2"),
-                textInput("Test_R3","Test_R3"),
-                tableOutput("React_Out")
-         ),
-         column(4,
-                h2("Observe Test"),
-                textInput("Test","Test"),
-                textInput("Test2","Test2"),
-                textInput("Test3","Test3"),
-                tableOutput("Observe_Out")
-         ),
-         column(4,
-                h2("Observe Event Test"),
-                textInput("Test_OE","Test_OE"),
-                textInput("Test_OE2","Test_OE2"),
-                textInput("Test_OE3","Test_OE3"),
-                tableOutput("Observe_Out_E"),
-                actionButton("Go","Test")
-         )
-         
+   ,tabPanel("Ref", {
+     fluidRow(
+       column(4,
+              h2("Reactive Test"),
+              textInput("Test_R","Test_R"),
+              textInput("Test_R2","Test_R2"),
+              textInput("Test_R3","Test_R3"),
+              tableOutput("React_Out")
        ),
-       fluidRow(
-         column(8,
-                h4("Note that observe and reactive work very much the same on the surface,
-       it is when we get into the server where we see the differences, and how those
-       can be exploited for diffrent uses.")
-         ))
-   )
-   
-  })
-  
-)
+       column(4,
+              h2("Observe Test"),
+              textInput("Test","Test"),
+              textInput("Test2","Test2"),
+              textInput("Test3","Test3"),
+              tableOutput("Observe_Out")
+       ),
+       column(4,
+              h2("Observe Event Test"),
+              textInput("Test_OE","Test_OE"),
+              textInput("Test_OE2","Test_OE2"),
+              textInput("Test_OE3","Test_OE3"),
+              tableOutput("Observe_Out_E"),
+              actionButton("Go","Test")
+       )
+     )
+     }, {fluidRow(
+       column(8,
+              h4("Note that observe and reactive work very much the same on the surface,
+     it is when we get into the server where we see the differences, and how those
+     can be exploited for diffrent uses.")
+       )
+       )
+    })
 
+   ,tabPanel("Dygraphs",{
+        fluidRow(h3("Dygraph Demos"))},{
+        fluidRow(h5("REF: https://rstudio.github.io/dygraphs/"))},{
+        fluidRow(
+          column(6,dygraphOutput("dygraphDemo1", width="100%", height="310px")),
+          column(6,dygraphOutput("dygraphDemo2", width="100%", height="350px")))},{
+        fluidRow()},{
+        fluidRow(
+          column(6,dygraphOutput("dygraphDemo3")),
+          column(6,dygraphOutput("dygraphDemo4")))},{
+            fluidRow()
+    })
+  )
+)
 #----------
 # Back-end
 #----------
@@ -404,9 +408,9 @@ server <- function(input, output, session) {
 
   # REF of Reactive, OBserve
   {
-    # Create a reactive Environment. Note that we can call the variable outside same place
-    # where it was created by calling Reactive_Var(). When the variable is called by
-    # renderTable is when it is evaluated. No real difference on the surface, all in the server.
+    # Create a reactive Evironment. Note that we can call the varaible outside same place
+    # where it was created by calling Reactive_Var(). When the varaible is called by
+    # renderTable is when it is evaluated. No real diffrence on the surface, all in the server.
     
     Reactive_Var<-reactive({c(input$Test_R, input$Test_R2, input$Test_R3)})
     
@@ -414,8 +418,8 @@ server <- function(input, output, session) {
       Reactive_Var()
     })
     
-    # Create an observe Environment. Note that we cannot access the created "df" outside 
-    # of the env. A, B,and C will update with any input into any of the three Text Fields.
+    # Create an observe Evironment. Note that we cannot access the created "df" outside 
+    # of the env. A, B,and C will update with any input into any of the three Text Feilds.
     observe({
       A<-input$Test
       B<-input$Test2
@@ -435,6 +439,41 @@ server <- function(input, output, session) {
     })
   }
   
+  # Dygraphs Demos
+  # Forecast package: https://pkg.robjhyndman.com/forecast/
+  {
+    output$dygraphDemo1 <- renderDygraph({
+      lungDeaths <- cbind(ldeaths, mdeaths, fdeaths)
+      dygraph(lungDeaths, main = "Deaths from Lung Disease (UK)") %>%
+        dyOptions(colors = RColorBrewer::brewer.pal(3, "Set2"))
+    })
+    
+    output$dygraphDemo2 <- renderDygraph({
+      lungDeaths <- cbind(ldeaths, mdeaths, fdeaths)
+      dygraph(lungDeaths, main = "Deaths from Lung Disease (UK)") %>% 
+        dyBarSeries('fdeaths') %>%
+        dyRangeSelector() %>% dyCrosshair(direction = "vertical")
+    })
+    
+    output$dygraphDemo3 <- renderDygraph({
+      lungDeaths <- cbind(ldeaths, mdeaths, fdeaths)
+      dygraph(lungDeaths, main = "Deaths from Lung Disease (UK)") %>%
+        dySeries("mdeaths", label = "Male") %>%
+        dySeries("fdeaths", label = "Female") %>%
+        dyOptions(stackedGraph = TRUE) %>%
+        dyRangeSelector(height = 20)
+    })
+    
+    output$dygraphDemo4 <- renderDygraph({
+      hw <- HoltWinters(ldeaths)
+      predicted <- predict(hw, n.ahead = 72, prediction.interval = TRUE)
+      dygraph(predicted, main = "Predicted Lung Deaths (UK)") %>%
+        dyAxis("x", drawGrid = FALSE) %>%
+        dySeries(c("lwr", "fit", "upr"), label = "Deaths") %>%
+        dyOptions(colors = RColorBrewer::brewer.pal(3, "Set1")) %>% 
+        dyCrosshair(direction = "vertical")
+    })
+  }
 }
 
 #--------
